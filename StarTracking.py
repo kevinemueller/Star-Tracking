@@ -39,21 +39,26 @@ class App(ctk.CTk):
         self.control_frame = ctk.CTkFrame(self, corner_radius=10)
         self.control_frame.pack(padx=10, pady=5, anchor='center', fill='both')
 
-        self.filter_bttn = ctk.CTkButton(self.control_frame, text='Clear', corner_radius=10, command=self.clear)
-        self.filter_bttn.pack(padx=10, pady=10)
+        self.clear_bttn = ctk.CTkButton(self.control_frame, text='Clear', corner_radius=10, command=self.clear)
+        self.clear_bttn.pack(padx=10, pady=10)
 
-        self.bw_filter_label = ctk.CTkLabel(self.control_frame, text='')
+        self.slider_frame = ctk.CTkFrame(self.control_frame, corner_radius=10)
+        self.slider_frame.pack(padx=10, pady=10, anchor='center', fill='x')
+
+        self.bw_filter_label = ctk.CTkLabel(self.slider_frame, text='0')
         self.bw_filter_label.pack(padx=10, pady=5, anchor='center')
 
-        self.bw_slider = ctk.CTkSlider(self.control_frame, corner_radius=10, from_=0, to=254, command=lambda e:self.update_slider_label(self.bw_slider, self.bw_filter_label))
+        self.bw_slider = ctk.CTkSlider(self.slider_frame, corner_radius=10, from_=0, to=254, command=lambda e:self.update_slider_label(self.bw_slider, self.bw_filter_label, text='Black & White: '))
         self.bw_slider.pack(padx=10, pady=5, fill='x', anchor='center')
 
-
-        self.canny_filter_label = ctk.CTkLabel(self.control_frame, text='')
+        self.canny_filter_label = ctk.CTkLabel(self.slider_frame, text='0')
         self.canny_filter_label.pack(padx=10, pady=5, anchor='center')
 
-        self.canny_slider = ctk.CTkSlider(self.control_frame, corner_radius=10, from_=0, to=254, command=lambda e:self.update_slider_label(self.canny_slider, self.canny_filter_label))
+        self.canny_slider = ctk.CTkSlider(self.slider_frame, corner_radius=10, from_=0, to=254, command=lambda e:self.update_slider_label(self.canny_slider, self.canny_filter_label, text='Canny: '))
         self.canny_slider.pack(padx=10, pady=5, fill='x', anchor='center')
+
+        self.close_bttn = ctk.CTkButton(self.control_frame, text='Close', corner_radius=10, command=self.close)
+        self.close_bttn.pack(padx=10, pady=10)
 
         Thread(target=self.run_process).start()
 
@@ -88,8 +93,8 @@ class App(ctk.CTk):
 
         return image
     
-    def update_slider_label(self, slider, label):
-        label.configure(text=str(int(slider.get())))
+    def update_slider_label(self, slider, label, text=''):
+        label.configure(text=text + str(int(slider.get())))
 
     def update_main_image(self, image, frame):
         image = ctk.CTkImage(light_image=image, size=(frame_width, frame_height))
