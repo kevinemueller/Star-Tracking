@@ -4,6 +4,15 @@ import numpy as np
 #cam = cv2.VideoCapture('./test_video.mp4')
 cam = cv2.VideoCapture(0)
 
+def nothing(x):
+    pass
+
+
+cv2.namedWindow('Attributes')
+cv2.createTrackbar('R', 'Attributes', 0, 255, nothing)
+cv2.createTrackbar('G', 'Attributes', 0, 255, nothing)
+cv2.createTrackbar('B', 'Attributes', 0, 255, nothing)
+
 class Tracker:
     def __init__(self, x, y):
         self.x = [x]
@@ -44,8 +53,13 @@ class CameraFeed:
         
         trackers = []
 
+        r = cv2.getTrackbarPos('R', 'Attributes')
+        g = cv2.getTrackbarPos('G', 'Attributes')
+        b = cv2.getTrackbarPos('B', 'Attributes')
+
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        lower = np.array([0, 0, 225])
+        #lower = np.array([70, 14, 213])
+        lower = np.array([r, g, b])
         upper = np.array([255, 255, 255])
         mask = cv2.inRange(hsv, lower, upper)
         frame = cv2.bitwise_and(image, image, mask=mask)
@@ -75,6 +89,7 @@ class CameraFeed:
     
     def get_contours(self, image):
         edges = cv2.Canny(image, 255, 255)
+        edges = cv2.GaussianBlur(edges, (3, 3), 0)
         cv2.imshow('Edges', edges)
         contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         return contours
