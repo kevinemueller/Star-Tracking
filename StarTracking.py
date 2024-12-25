@@ -45,7 +45,7 @@ class CameraFeed:
         trackers = []
 
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        lower = np.array([75, 0, 75])
+        lower = np.array([0, 0, 225])
         upper = np.array([255, 255, 255])
         mask = cv2.inRange(hsv, lower, upper)
         frame = cv2.bitwise_and(image, image, mask=mask)
