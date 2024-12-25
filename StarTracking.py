@@ -1,110 +1,87 @@
 import cv2
-import customtkinter as ctk
-from threading import Thread
-from PIL import Image
 import numpy as np
 
-# Web Camera
-cap = cv2.VideoCapture(1)
+#cam = cv2.VideoCapture('./test_video.mp4')
+cam = cv2.VideoCapture(0)
 
-#cap = cv2.VideoCapture(r'C:\Users\Kevin\Downloads\Time-lapse of stars moving through the night sky.mp4')
+class Tracker:
+    def __init__(self, x, y):
+        self.x = [x]
+        self.y = [y]
 
-# Get the frame width and height
-frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-class App(ctk.CTk):
+class CameraFeed:
     def __init__(self):
-        super().__init__()
 
-        self.title("GUI")
+        self.max_trackers = 10
+        self.trackers = []
 
-        
+    def run(self):
+        global cam
 
-        blank_image = Image.fromarray(np.zeros((frame_height, frame_width, 3), dtype=np.uint8))
-        image = ctk.CTkImage(light_image=blank_image, size=(frame_width*2, frame_height))
+        while cam.isOpened():
+            ret, frame = self.update_frame()
 
-        self.image_frame = ctk.CTkFrame(self, corner_radius=10, fg_color='#000000')
-        self.image_frame.pack(padx=10, pady=5, anchor='center', fill='both')
+            if ret:
+                self.trackers = self.add_trackers(image=frame)
 
-        self.image_label_left = ctk.CTkLabel(self.image_frame, image=image, text='')
-        self.image_label_left.pack(padx=5, pady=5, anchor='w', side='left')
+                if self.trackers:
 
-        self.template_tracker = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
-        iamge = ctk.CTkImage(light_image=Image.fromarray(self.template_tracker), size=(frame_width*2, frame_height))
+                    for tracker in self.trackers:
+                        x, y, w, h = tracker['pos']
+                        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 1)
 
-        self.image_label_right = ctk.CTkLabel(self.image_frame, image=iamge, text='')
-        self.image_label_right.pack(padx=5, pady=5, anchor='e', side='right')
+                    cv2.imshow('Live', frame)
+                    cv2.waitKey(1)
 
-        self.control_frame = ctk.CTkFrame(self, corner_radius=10)
-        self.control_frame.pack(padx=10, pady=5, anchor='center', fill='both')
-
-        self.clear_bttn = ctk.CTkButton(self.control_frame, text='Clear', corner_radius=10, command=self.clear)
-        self.clear_bttn.pack(padx=10, pady=10)
-
-        self.slider_frame = ctk.CTkFrame(self.control_frame, corner_radius=10)
-        self.slider_frame.pack(padx=10, pady=10, anchor='center', fill='x')
-
-        self.bw_filter_label = ctk.CTkLabel(self.slider_frame, text='0')
-        self.bw_filter_label.pack(padx=10, pady=5, anchor='center')
-
-        self.bw_slider = ctk.CTkSlider(self.slider_frame, corner_radius=10, from_=0, to=254, command=lambda e:self.update_slider_label(self.bw_slider, self.bw_filter_label, text='Black & White: '))
-        self.bw_slider.pack(padx=10, pady=5, fill='x', anchor='center')
-
-        self.canny_filter_label = ctk.CTkLabel(self.slider_frame, text='0')
-        self.canny_filter_label.pack(padx=10, pady=5, anchor='center')
-
-        self.canny_slider = ctk.CTkSlider(self.slider_frame, corner_radius=10, from_=0, to=254, command=lambda e:self.update_slider_label(self.canny_slider, self.canny_filter_label, text='Canny: '))
-        self.canny_slider.pack(padx=10, pady=5, fill='x', anchor='center')
-
-        self.close_bttn = ctk.CTkButton(self.control_frame, text='Close', corner_radius=10, command=self.close)
-        self.close_bttn.pack(padx=10, pady=10)
-
-        Thread(target=self.run_process).start()
-
-    def clear(self):
-        self.template_tracker = np.zeros((frame_height, frame_width, 3), dtype=np.uint8)
-
-    def run_process(self):
-
-        ret, frame = cap.read()
-        if ret:
-            frame = self.image_filter(frame)
-            self.update_main_image(image=Image.fromarray(frame), frame=self.image_label_left)
-            self.update_main_image(image=Image.fromarray(self.template_tracker), frame=self.image_label_right)
-            self.after(10, self.run_process)
+            #else:
+                #cam = cv2.VideoCapture('./test_video.mp4')
     
-    def image_filter(self, image):
+    def update_frame(self):
+        return cam.read()
 
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        _, mask = cv2.threshold(gray, int(self.bw_slider.get()), 255, cv2.THRESH_BINARY)
-        white_parts = cv2.bitwise_and(image, image, mask=mask)
+    def add_trackers(self, image):
+        
+        trackers = []
 
-        edged = cv2.Canny(white_parts, int(self.canny_slider.get()), 255) 
-        contours, _ = cv2.findContours(edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        lower = np.array([75, 0, 75])
+        upper = np.array([255, 255, 255])
+        mask = cv2.inRange(hsv, lower, upper)
+        frame = cv2.bitwise_and(image, image, mask=mask)
+        contours = self.get_contours(image=frame)
+
+        min_size = 15
 
         for contour in contours:
             x, y, w, h = cv2.boundingRect(contour)
-            if w <= 10 and h <= 10:
-                cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(image, text=f'x:{x} y:{y} w:{w} h:{h}', org=(x, y), fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL, fontScale=1, color=(0, 255, 0), thickness=1)
-                cv2.circle(self.template_tracker, (x, y), 1, (0, 255, 0), 1)
 
-        return image
+            if w <= min_size and h <= min_size:
+                cropped_image = frame[y:y+h, x:x+w]
+                gray = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+                mean = np.mean(gray)
+                max_bright = {'max': mean, 'pos': (x, y, w, h)}
+                trackers.append(max_bright)
+
+
+        for i in range(len(trackers)):
+            for j in range(0, len(trackers)-i-1):
+                if trackers[j]['max'] > trackers[j+1]['max']:
+                    trackers[j]['max'], trackers[j+1]['max'] = trackers[j+1]['max'], trackers[j]['max']
+
+        cv2.imshow('Mask', frame)
+        return trackers
+
     
-    def update_slider_label(self, slider, label, text=''):
-        label.configure(text=text + str(int(slider.get())))
-
-    def update_main_image(self, image, frame):
-        image = ctk.CTkImage(light_image=image, size=(frame_width, frame_height))
-        frame.configure(image=image)
-
-    def close(self):
-        cap.release()
-        self.destroy()
-
+    def get_contours(self, image):
+        edges = cv2.Canny(image, 255, 255)
+        cv2.imshow('Edges', edges)
+        contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        return contours
 
 if __name__ == '__main__':
-    app = App()
-    app.mainloop()
+
+    app = CameraFeed()
+    app.run()
+
+print('Ended')
