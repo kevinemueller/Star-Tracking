@@ -4,7 +4,6 @@ import customtkinter as ctk
 from PIL import Image
 from threading import Thread
 
-#cam = cv2.VideoCapture('./test_video.mp4')
 cam = cv2.VideoCapture(0)
 ret, frame = cam.read()
 cam_h, cam_w, cam_c = frame.shape 
