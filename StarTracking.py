@@ -12,19 +12,19 @@ class Sliders(ctk.CTk):
     def __init__(self, parent_frame):
         super().__init__()
 
-        self.r_label = ctk.CTkLabel(parent_frame, text="R: 0", width=50)
+        self.r_label = ctk.CTkLabel(parent_frame, text="Hue: 0", width=50)
         self.r_label.grid(row=0, column=0, padx=(5, 0))
-        self.r_slider = ctk.CTkSlider(parent_frame, from_=0, to=255, command=lambda e:self.update_label(slider=self.r_slider, label=self.r_label, base='R:'), width=1280)
+        self.r_slider = ctk.CTkSlider(parent_frame, from_=0, to=255, command=lambda e:self.update_label(slider=self.r_slider, label=self.r_label, base='Hue:'), width=1280)
         self.r_slider.grid(row=0, column=1, padx=5, pady=5)
 
-        self.g_label = ctk.CTkLabel(parent_frame, text="G: 0", width=50)
+        self.g_label = ctk.CTkLabel(parent_frame, text="Sat: 0", width=50)
         self.g_label.grid(row=1, column=0, padx=(5, 0))
-        self.g_slider = ctk.CTkSlider(parent_frame, from_=0, to=255, command=lambda e:self.update_label(slider=self.g_slider, label=self.g_label, base='G:'), width=1280)
+        self.g_slider = ctk.CTkSlider(parent_frame, from_=0, to=255, command=lambda e:self.update_label(slider=self.g_slider, label=self.g_label, base='Sat:'), width=1280)
         self.g_slider.grid(row=1, column=1, padx=5, pady=(0,5))
 
-        self.b_label = ctk.CTkLabel(parent_frame, text="B: 0", width=50)
+        self.b_label = ctk.CTkLabel(parent_frame, text="Val: 0", width=50)
         self.b_label.grid(row=2, column=0, padx=(5, 0))
-        self.b_slider = ctk.CTkSlider(parent_frame, from_=0, to=255, command=lambda e:self.update_label(slider=self.b_slider, label=self.b_label, base='B:'), width=1280)
+        self.b_slider = ctk.CTkSlider(parent_frame, from_=0, to=255, command=lambda e:self.update_label(slider=self.b_slider, label=self.b_label, base='Val:'), width=1280)
         self.b_slider.grid(row=2, column=1, padx=5, pady=(0,5))
 
 
